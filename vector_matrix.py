@@ -154,23 +154,38 @@ class matrix:
         result = matrix(transposed_matrix)
         return result
 
-    def submatrix(self, si, sj):
-        si -= 1
-        sj -= 1
+    def submatrix(self, si, sj, ni=None, nj=None):
+        # this one is used for easily removing a row and column
+        if (not ni) and (not nj):
+            si -= 1
+            sj -= 1
 
-        submatrix_data = []
-        for i in range(self.dimensions[0]):
-            submatrix_data.append([])
-            for j in range(self.dimensions[1]):
-                submatrix_data[i].append(self.data[i][j])
+            submatrix_data = []
+            for i in range(self.dimensions[0]):
+                submatrix_data.append([])
+                for j in range(self.dimensions[1]):
+                    submatrix_data[i].append(self.data[i][j])
 
-        for row in submatrix_data:
-            del row[sj]
+            for row in submatrix_data:
+                del row[sj]
 
-        del submatrix_data[si]
+            del submatrix_data[si]
 
-        submatrix = matrix(submatrix_data)
-        return submatrix
+            submatrix = matrix(submatrix_data)
+            return submatrix
+        
+        # for everything else in general
+        else:
+            si -= 1
+            sj -= 1
+            submatrix_data = []
+            rows = 0
+            for i in range(si, si + ni):
+                submatrix_data.append([])
+                for j in range(sj, sj + nj):
+                    submatrix_data[rows].append(self.data[i][j])
+                rows += 1
+            return matrix(submatrix_data)
 
     def cofactor(self, ci, cj):
         smx = self.submatrix(ci+1, cj+1)
