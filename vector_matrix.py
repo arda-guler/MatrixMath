@@ -95,6 +95,15 @@ class matrix:
         else:
             return self.data[i][j]
 
+    def safe_copy(self):
+        copy_data = []
+        for i in range(self.dimensions[0]):
+            copy_data.append([])
+            for j in range(self.dimensions[1]):
+                copy_data[i].append(self.data[i][j])
+
+        return matrix(copy_data)
+
     def add(self, mat):
         if not self.dimensions == mat.dimensions:
             print("Cannot add matrices of different dimensions!")
@@ -247,3 +256,15 @@ class matrix:
             nn -= 1
 
         return None
+
+    def augment(self, m2):
+        if not self.dimensions[0] == m2.dimensions[0]:
+            return
+
+        s = self.safe_copy()
+        
+        for i in range(self.dimensions[0]):
+            for j in range(m2.dimensions[1]):
+                s.data[i].append(m2.data[i][j])
+
+        return s
