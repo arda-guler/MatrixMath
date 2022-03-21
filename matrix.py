@@ -1,73 +1,3 @@
-class vector:
-    def __init__(self, data=[]):
-        self.data = data
-        self.dimensions = len(data)
-
-    def __repr__(self):
-        return str(self.data)
-
-    def get(self, i=None):
-        if not i:
-            return self.data
-        else:
-            return self.data[i]
-
-    def add(self, vec):
-        if not self.dimensions == vec.dimensions:
-            print("Cannot add vectors of different dimensions!")
-            return
-
-        for i in range(self.dimensions):
-            self.data[i] += vec.data[i]
-
-    def sub(self, vec):
-        if not self.dimensions == vec.dimensions:
-            print("Cannot subtract vectors of different dimensions!")
-            return
-
-        self.add(vec.scale(-1))
-
-    def scale(self, scalar):
-        for i in range(self.dimensions):
-            self.data[i] *= scalar
-
-    def get_length(self):
-        s_sum = 0
-        for element in self.data:
-            s_sum += element**2
-
-        return s_sum**(0.5)
-
-    def get_p_norm(self, p):
-        setsum = 0
-        for element in self.data:
-            setsum += abs(element)**p
-
-        return setsum**(1/p)
-
-    def dot(self, vec):
-        if not self.dimensions == vec.dimensions:
-            print("Cannot compute dot product of vectors of different dimensions!")
-            return
-
-        result = 0
-        for i in range(self.dimensions):
-            result += self.data[i] * vec.data[i]
-
-        return result
-
-    def cross(self, vec):
-        if not self.dimensions == 3 or not vec.dimensions == 3:
-            print("Cannot compute cross product for non-3D vectors!")
-            return
-
-        result = [0,0,0]
-        result[0] = self.data[1] * vec.data[2] - self.data[2] * vec.data[1]
-        result[1] = - (self.data[0] * vec.data[2] - self.data[2] * vec.data[0])
-        result[2] = self.data[0] * vec.data[1] - self.data[1] * vec.data[0]
-
-        return result
-
 class matrix:
     def __init__(self, data=[]):
         self.data = data
@@ -104,30 +34,41 @@ class matrix:
 
         return matrix(copy_data)
 
-    def add(self, mat):
+    def __add__(self, mat):
+        if not type(mat) == matrix:
+            return
+        
         if not self.dimensions == mat.dimensions:
             print("Cannot add matrices of different dimensions!")
             return
 
+        s = self.safe_copy()
+
         for i in range(self.dimensions[0]):
             for j in range(self.dimensions[1]):
-                self.data[i][j] += mat.data[i][j]
+                s.data[i][j] += mat.data[i][j]
 
-    def sub(self, mat):
+        return s
+
+    def __sub__(self, mat):
+        if not type(mat) == matrix:
+            return
+        
         if not self.dimensions == mat.dimensions:
             print("Cannot subtract matrices of different dimensions!")
             return
 
-        self.add(mat.scale(-1))
+        return self.__add__(mat * -1)
 
-    def scale(self, scalar):
-        for i in range(self.dimensions[0]):
-            for j in range(self.dimensions[1]):
-                self.data[i][j] *= scalar
+    def __mul__(self, mat):
+        if not type(mat) == matrix:
+            s = self.safe_copy()
+            for i in range(s.dimensions[0]):
+                for j in range(s.dimensions[1]):
+                    s.data[i][j] *= mat
 
-        return self
-
-    def mult(self, mat):
+            return s
+        
         if not self.dimensions[1] == mat.dimensions[0]:
             print("Incompatible matrix dimensions for multiplication!")
             return
@@ -144,6 +85,17 @@ class matrix:
         result = matrix(result_data)
         return result
 
+    def __truediv__(self, mat):
+        if not type(mat) == matrix:
+            s = self.safe_copy()
+            for i in range(s.dimensions[0]):
+                for j in range(s.dimensions[1]):
+                    s.data[i][j] *= 1/mat
+
+            return s
+
+        return self.__mul__(mat.inverse())
+
     def transpose(self):
         transposed_matrix = []
         for i in range(self.dimensions[0]):
@@ -157,23 +109,90 @@ class matrix:
     def submatrix(self, si, sj, ni=None, nj=None):
         # this one is used for easily removing a row and column
         if (not ni) and (not nj):
-            si -= 1
-            sj -= 1
+            if ((not type(si)==list) and (not type(sj)==list)):
+                si -= 1
+                sj -= 1
 
-            submatrix_data = []
-            for i in range(self.dimensions[0]):
-                submatrix_data.append([])
-                for j in range(self.dimensions[1]):
-                    submatrix_data[i].append(self.data[i][j])
+                submatrix_data = []
+                for i in range(self.dimensions[0]):
+                    submatrix_data.append([])
+                    for j in range(self.dimensions[1]):
+                        submatrix_data[i].append(self.data[i][j])
 
-            for row in submatrix_data:
-                del row[sj]
+                for row in submatrix_data:
+                    del row[sj]
 
-            del submatrix_data[si]
+                del submatrix_data[si]
 
-            submatrix = matrix(submatrix_data)
-            return submatrix
-        
+                submatrix = matrix(submatrix_data)
+                return submatrix
+
+            # TODO: Do not use 'del' here
+            elif (type(si) == list) and (type(sj) == list):
+                for i in si:
+                    i -= 1
+
+                for j in sj:
+                    j -= 1
+                
+                submatrix_data = []
+                for i in range(self.dimensions[0]):
+                    submatrix_data.append([])
+                    for j in range(self.dimensions[1]):
+                        submatrix_data[i].append(self.data[i][j])
+
+                for row in submatrix_data:
+                    for j in sj:
+                        del row[j]
+
+                for i in si:
+                    del submatrix_data[i]
+
+                submatrix = matrix(submatrix_data)
+                return submatrix
+
+            elif (type(si) == list) and (not type(sj) == list):
+                for i in si:
+                    i -= 1
+                    
+                sj -= 1
+
+                submatrix_data = []
+                for i in range(self.dimensions[0]):
+                    submatrix_data.append([])
+                    for j in range(self.dimensions[1]):
+                        submatrix_data[i].append(self.data[i][j])
+
+                for row in submatrix_data:
+                    del row[sj]
+
+                for i in si:
+                    del submatrix_data[i]
+
+                submatrix = matrix(submatrix_data)
+                return submatrix
+
+            elif (not type(si) == list) and (type(sj) == list):
+                si -= 1
+
+                for j in sj:
+                    j -= 1
+
+                submatrix_data = []
+                for i in range(self.dimensions[0]):
+                    submatrix_data.append([])
+                    for j in range(self.dimensions[1]):
+                        submatrix_data[i].append(self.data[i][j])
+
+                for row in submatrix_data:
+                    for j in sj:
+                        del row[j]
+
+                del submatrix_data[si]
+
+                submatrix = matrix(submatrix_data)
+                return submatrix
+            
         # for everything else in general
         else:
             si -= 1
