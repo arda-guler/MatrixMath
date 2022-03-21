@@ -248,7 +248,6 @@ class matrix:
                             cmatrix[i].append(self.data[i+i_start][j + j_start])
 
                     cmatrix = matrix(cmatrix)
-                    print(cmatrix.determinant())
 
                     if not cmatrix.determinant() == 0:
                         return nn
